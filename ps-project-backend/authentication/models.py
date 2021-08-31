@@ -26,9 +26,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     all_objects = UserManager(inactive=True)
     USERNAME_FIELD = 'username'
 
-    class Meta:
-        unique_together = ('email',)
-
     def __str__(self):
         return '%s, %s' % (self.id, self.username)
 

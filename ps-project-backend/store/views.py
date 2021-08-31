@@ -6,12 +6,12 @@ from .models import ProductItem, Cart, CartItem
 from .serializers import ProductItemSerializer, CartItemSerializer, CartSerializer
 # Create your views here.
 class ProductItemList(generics.ListCreateAPIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
     queryset = ProductItem.objects.all()
     serializer_class = ProductItemSerializer
 
 class ProductItemDetail(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
     queryset = ProductItem.objects.all()
     serializer_class = ProductItemSerializer
 
