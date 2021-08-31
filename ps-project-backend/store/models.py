@@ -1,6 +1,7 @@
 from django.db import models
 from project_backend.models import BaseModel
-# Create your models here.
+from project_backend.settings import AUTH_USER_MODEL
+
 class ProductItem(BaseModel):
     name = models.CharField(max_length=128, null=True, blank=True)
     price = models.FloatField(null=True, blank=True)
@@ -22,6 +23,10 @@ class CartStatus(models.TextChoices):
 class Cart(BaseModel):
     status = models.CharField(choices=CartStatus.choices, max_length=32, default=CartStatus.ORDERED)
     hash = models.CharField(max_length=8, unique=True, null=True)
+    user = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
+
+    class Meta:
+        db_table = 'cart'
 
 class CartItem(BaseModel):
     item = models.ForeignKey(ProductItem, on_delete=models.PROTECT, related_name='cart_product_item')
