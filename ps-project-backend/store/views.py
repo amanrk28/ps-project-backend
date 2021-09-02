@@ -2,18 +2,18 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import APIException, PermissionDenied
 
-from .models import ProductItem, Cart, CartItem
-from .serializers import ProductItemSerializer, CartItemSerializer, CartSerializer
+from .models import Product, Cart, CartItem
+from .serializers import ProductSerializer, CartItemSerializer, CartSerializer
 # Create your views here.
-class ProductItemList(generics.ListCreateAPIView):
+class ProductList(generics.ListCreateAPIView):
     permission_classes = (AllowAny,)
-    queryset = ProductItem.objects.all()
-    serializer_class = ProductItemSerializer
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
 
-class ProductItemDetail(generics.RetrieveUpdateDestroyAPIView):
+class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (AllowAny,)
-    queryset = ProductItem.objects.all()
-    serializer_class = ProductItemSerializer
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
 
 class CartItemList(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticated,)

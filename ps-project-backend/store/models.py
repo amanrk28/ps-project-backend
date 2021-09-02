@@ -2,7 +2,7 @@ from django.db import models
 from project_backend.models import BaseModel
 from project_backend.settings import AUTH_USER_MODEL
 
-class ProductItem(BaseModel):
+class Product(BaseModel):
     name = models.CharField(max_length=128, null=True, blank=True)
     price = models.FloatField(null=True, blank=True)
     image = models.URLField(max_length=512, null=True, blank=True)
@@ -21,15 +21,15 @@ class CartStatus(models.TextChoices):
     ORDERED = 'ordered'
 
 class Cart(BaseModel):
-    status = models.CharField(choices=CartStatus.choices, max_length=32, default=CartStatus.ORDERED)
+    status = models.CharField(choices=CartStatus.choices, max_length=32, default=CartStatus.NEW)
     hash = models.CharField(max_length=8, unique=True, null=True)
-    user = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
+    added_by = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
 
     class Meta:
         db_table = 'cart'
 
 class CartItem(BaseModel):
-    item = models.ForeignKey(ProductItem, on_delete=models.PROTECT, related_name='cart_product_item')
+    item = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='cart_product_item')
     cart = models.ForeignKey(Cart, on_delete=models.PROTECT)
     quantity = models.IntegerField(null=True, blank=True)
 
