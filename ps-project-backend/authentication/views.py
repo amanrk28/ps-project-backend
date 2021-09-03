@@ -1,12 +1,13 @@
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import APIException
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes, renderer_classes
 
 from .models import User, AuthToken
 from .serializers import UserSerializer
-from project_backend.drf_utils import Response
+from project_backend.utils import Response
 from project_backend.renderer import ApiRenderer
 
 @csrf_exempt
@@ -46,6 +47,8 @@ class UserList(generics.ListCreateAPIView):
 class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    renderer_classes = [ApiRenderer]
+    permission_classes = [IsAuthenticated,]
 
 
 @api_view(["POST"])
@@ -54,6 +57,9 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
 def verify_user_and_return_token(request):
     user = User.objects.get(email=request.data.get('email'))
     serializer = UserSerializer(user).data
+    if not request.data.get('password'):
+        return JsonResponse(
+            {'status': False, 'data': None, 'msg': 'Password not provided. Authentication Failed'}, status=400)
     if user.check_password(request.data.get('password')):
         token = AuthToken.objects.get(user=user)
         res_data =  {'token': token.key, 'user': serializer}

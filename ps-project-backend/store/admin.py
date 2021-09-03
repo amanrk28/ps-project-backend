@@ -8,8 +8,8 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    list_display = ('status', 'hash')
+    list_display = ('status', 'hash', 'user')
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
-    list_display = ('item', 'cart', 'quantity')
+    list_display = ('product', 'cart', 'quantity')

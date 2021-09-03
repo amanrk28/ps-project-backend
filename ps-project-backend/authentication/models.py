@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from project_backend.settings import AUTH_USER_MODEL
+from project_backend.models import BaseModel
 
 class UserManager(BaseUserManager):
     # custom user model
@@ -68,7 +69,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def fullname(self):
         return (getattr(self, 'first_name') or '') + ' ' + (getattr(self, 'last_name') or '')
 
-class AuthToken(models.Model):
+class AuthToken(BaseModel):
     key = models.CharField(_("Key"), max_length=40, db_index=True, unique=True)
     user = models.ForeignKey(AUTH_USER_MODEL, related_name="auth_tokens", on_delete=models.CASCADE, verbose_name=_("User") )
 
