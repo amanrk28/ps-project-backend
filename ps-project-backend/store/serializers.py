@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django_restql.mixins import DynamicFieldsMixin
 from .models import Product, Cart, CartItem
 
-class ProductSerializer(serializers.ModelSerializer):
+class ProductSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'

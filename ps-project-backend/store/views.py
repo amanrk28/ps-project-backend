@@ -1,7 +1,8 @@
-from rest_framework import generics
+from rest_framework import generics, filters as searchFilter
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework.decorators import api_view, permission_classes, renderer_classes
+import django_filters.rest_framework as filters
 
 from authentication.models import User
 from store.models import CartStatus, Product, Cart, CartItem, ProductCategory
@@ -14,9 +15,12 @@ class ProductList(generics.ListAPIView):
     queryset = Product.objects.all().order_by('name')
     serializer_class = ProductSerializer
     permission_classes = (AllowAny,)
+    filter_backends = (filters.DjangoFilterBackend, searchFilter.SearchFilter)
+    filterset_fields = ['category',]
+    search_fields = ['^name']
 
     def get_serializer(self, *args, **kwargs):
-        included_fields = ('name', 'price', 'stock', 'is_available', 'description', 'category')
+        included_fields = ('id', 'name', 'price', 'image', 'stock', 'is_available', 'description', 'category')
         return super(ProductList, self).get_serializer(*args, **kwargs, fields = included_fields)
 
 class ProductCreate(generics.CreateAPIView):
