@@ -77,9 +77,12 @@ class CartItemList(generics.ListCreateAPIView):
             hash_id = compute_hash()
             cart = Cart.objects.create(user=user, hash=hash_id)
 
+        if CartItem.objects.filter(cart=cart, product=product_id).exists():
+            raise APIException("Product already Added to Cart")
+
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
         serializer.initial_data['cart_id'] = cart.id
+        serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response(serializer.data)
 

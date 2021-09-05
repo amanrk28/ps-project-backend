@@ -1,7 +1,8 @@
 from rest_framework import serializers
+from django_restql.mixins import DynamicFieldsMixin
 from .models import User
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
 
     class Meta:

@@ -48,7 +48,7 @@ class Cart(BaseModel):
 class CartItem(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='cart_product')
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
-    quantity = models.IntegerField(null=True, blank=True)
+    quantity = models.IntegerField(default=1, null=True, blank=True)
 
     class Meta:
         db_table = 'cart_item'

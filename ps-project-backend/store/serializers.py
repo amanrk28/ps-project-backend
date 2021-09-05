@@ -15,15 +15,21 @@ class CartSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 class CartItemSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     cart_count = serializers.SerializerMethodField(read_only=True)
     cart = CartSerializer(fields=('hash',), read_only=True)
+    amount = serializers.SerializerMethodField(read_only=True)
     cart_id = serializers.PrimaryKeyRelatedField(write_only=True, source='cart', queryset=Cart.objects.all())
     product_id = serializers.PrimaryKeyRelatedField(write_only=True, source='product', queryset=Product.objects.all())
     product = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = CartItem
-        fields = '__all__'
+        exclude = ('deleted', 'created_on', 'updated_on', 'id')
 
     def get_product(self, instance):
-        return ProductSerializer(instance.product, context=self.context).data
+        excluded_fields = ('deleted', 'created_on', 'updated_on')
+        return ProductSerializer(instance.product, context=self.context, exclude=excluded_fields).data
 
     def get_cart_count(self, instance):
         return CartItem.objects.filter(cart=instance.cart).count()
+
+    def get_amount(self, instance):
+        return instance.product.price * instance.quantity
