@@ -1,6 +1,7 @@
 import secrets
 import string
-from rest_framework import status
+import datetime
+from rest_framework import status, permissions
 from rest_framework.response import Response as drf_response
 from rest_framework.exceptions import APIException, PermissionDenied, AuthenticationFailed
 from rest_framework.views import exception_handler
@@ -37,3 +38,22 @@ class Response(drf_response):
         super().__init__(data=data, status=status, template_name=template_name, headers=headers, exception=exception,
                          content_type=content_type)
         self.data = {'data': data, 'msg': msg}
+
+def permission_required(permission_names, raise_exception=False):
+    class PermissionRequired(permissions.BasePermission):
+        def has_permission(self, request, view):
+            user = request.user
+            if len(set(permission_names) & user.get_all_permissions()) > 0:
+                return True
+            if raise_exception:
+                raise PermissionDenied()
+            return False
+
+    return PermissionRequired
+
+def get_datetime_from_timestamp(time_in_ms):
+    if isinstance(time_in_ms, str):
+        timestamp = int(time_in_ms)
+        dt_object = datetime.datetime.fromtimestamp(timestamp / 1000)
+        return dt_object
+    return time_in_ms

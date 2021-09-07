@@ -8,9 +8,28 @@ class ProductSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 class CartSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    cart_items = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Cart
-        fields = '__all__'
+        exclude = ('deleted', 'created_on', 'updated_on')
+
+    def get_cart_items(self, instance):
+        cart_items_queryset = CartItem.objects.filter(cart=instance).values_list('product_id','product__image', 'product__name', 'product__price', 'quantity')
+        cart_items = list()
+        for item in list(cart_items_queryset):
+            data = {'product_id': item[0], 'image': item[1], 'name': item[2], 'price': item[3], 'quantity': item[4]}
+            data.update({'amount': data['price'] * data['quantity']})
+            cart_items.append(data)
+        return cart_items
+
+    def to_representation(self, instance):
+        data = super(CartSerializer, self).to_representation(instance)
+        amt = 0.0
+        for item in data['cart_items']:
+            amt += item['amount']
+        data['total_amount'] = amt
+        return data
 
 class CartItemSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     cart_count = serializers.SerializerMethodField(read_only=True)

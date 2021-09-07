@@ -1,3 +1,4 @@
+import datetime
 from rest_framework import generics, filters as searchFilter
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import APIException, PermissionDenied
@@ -5,9 +6,11 @@ from rest_framework.decorators import api_view, permission_classes, renderer_cla
 import django_filters.rest_framework as filters
 
 from authentication.models import User
+from authentication.config import *
 from store.models import CartStatus, Product, Cart, CartItem, ProductCategory
-from store.serializers import ProductSerializer, CartItemSerializer
-from project_backend.utils import compute_hash, Response
+from store.serializers import CartSerializer, ProductSerializer, CartItemSerializer
+from order.models import Order, OrderItem
+from project_backend.utils import compute_hash, Response, permission_required
 from project_backend.renderer import ApiRenderer
 
 
@@ -26,7 +29,8 @@ class ProductList(generics.ListAPIView):
 class ProductCreate(generics.CreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,
+                          permission_required([ADD_PRODUCT]))
 
     def create(self,request, *args, **kwargs):
         data = request.data
@@ -38,9 +42,10 @@ class ProductCreate(generics.CreateAPIView):
 
 
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated,)
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = (IsAuthenticated,
+                          permission_required([UPDATE_PRODUCT, DELETE_PRODUCT, READ_PRODUCT]))
 
 # API view to fetch Product Categories List
 @api_view(["GET"])
@@ -118,3 +123,63 @@ class CartItemDetail(generics.RetrieveUpdateDestroyAPIView):
         cart = self.get_cart()
         res = {'cart_count': CartItem.objects.filter(cart=cart).count()}
         return Response(res, msg="Successfully deleted Item from Cart")
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+@renderer_classes([ApiRenderer])
+def checkout_page_details(request):
+    user: User = request.user
+    cart_hash = request.data.get('cart_hash')
+
+    if not cart_hash or not Cart.objects.filter(hash=cart_hash).exists():
+        raise APIException("Cart Doesnot Exist")
+
+    try:
+        cart = Cart.objects.get(user=user, hash=cart_hash, status=CartStatus.NEW)
+    except Cart.DoesNotExist:
+        raise APIException("Please refresh your page once")
+
+    try:
+        _ = CartItem.objects.filter(cart=cart)
+    except CartItem.DoesNotExist:
+        raise APIException("Cart is empty. Add items to cart to proceed")
+
+    serializer = CartSerializer(cart)
+    return Response(serializer.data, msg="Checkout page details")
+
+
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated, permission_required([ADD_ORDER, DELETE_CARTITEM, READ_CART, READ_CARTITEM, UPDATE_CART])))
+@renderer_classes([ApiRenderer])
+def order_from_cart(request):
+    user: User = request.user
+    cart_hash = request.data.get('cart_hash')
+
+    if not cart_hash or not Cart.objects.filter(hash=cart_hash).exists():
+        raise APIException("Cart Doesnot Exist")
+
+    try:
+        cart = Cart.objects.get(user=user, hash=cart_hash, status=CartStatus.NEW)
+    except Cart.DoesNotExist:
+        raise APIException("Please refresh your page once")
+
+    try:
+        cart_items = CartItem.objects.filter(cart=cart)
+    except CartItem.DoesNotExist:
+        raise APIException("Cart is empty. Add items to cart to proceed")
+
+    dispatch_eta = datetime.datetime.now() + datetime.timedelta(days=2)
+    delivery_eta = dispatch_eta + datetime.timedelta(days=2)
+    order_data = {'placed_by': user.id, 'delivery_address': user.address,
+                  'expected_dispatch_date': dispatch_eta, 'expected_delivery_date': delivery_eta}
+
+    order = Order.objects.create(**order_data)
+
+    for item in cart_items:
+        OrderItem.objects.create({'product': item.product.id, 'quantity': item.quantity, 'order': order.id})
+
+    cart.status = CartStatus.ORDERED
+    cart.save()
+    CartItem.objects.filter(cart=cart.id).delete()
+    return Response({'order_id': order.id}, msg="Order Created")

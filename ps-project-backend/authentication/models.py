@@ -71,10 +71,13 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class AuthToken(BaseModel):
     key = models.CharField(_("Key"), max_length=40, db_index=True, unique=True)
-    user = models.ForeignKey(AUTH_USER_MODEL, related_name="auth_tokens", on_delete=models.CASCADE, verbose_name=_("User") )
+    user = models.OneToOneField(AUTH_USER_MODEL, related_name="auth_tokens", on_delete=models.CASCADE, verbose_name=_("User") )
 
     class Meta:
         verbose_name = "token"
+
+    def __str__(self):
+        return '%s, %s' % (self.user.id, self.key)
 
     def save(self, *args, **kwargs):
         if not self.key:

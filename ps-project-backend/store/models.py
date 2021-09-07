@@ -25,7 +25,7 @@ class Product(BaseModel):
     category = models.CharField(choices=ProductCategory.choices, max_length=64, default=ProductCategory.NEW)
 
     def __str__(self):
-        return self.name
+        return '%s, %s' % (self.id, self.name)
 
     class Meta:
         db_table = 'product'
@@ -44,6 +44,9 @@ class Cart(BaseModel):
     class Meta:
         db_table = 'cart'
 
+    def __str__(self):
+        return '%s, %s - %s' % (self.id, self.user.first_name, self.status)
+
 
 class CartItem(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='cart_product')
@@ -52,3 +55,6 @@ class CartItem(BaseModel):
 
     class Meta:
         db_table = 'cart_item'
+
+    def __str__(self):
+        return '%s, %s of user %s' % (self.id, self.product.name, self.cart.user.first_name)
