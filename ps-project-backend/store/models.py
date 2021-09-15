@@ -16,8 +16,8 @@ class ProductCategory(models.TextChoices):
 
 class Product(BaseModel):
     added_by = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.PROTECT)
-    name = models.CharField(max_length=128, null=True, blank=True)
-    price = models.FloatField(null=True, blank=True)
+    name = models.CharField(max_length=128, unique=True)
+    price = models.FloatField()
     image = models.URLField(max_length=512, null=True, blank=True)
     stock = models.IntegerField(null=True, blank=True)
     is_available = models.BooleanField(default=False, null=True, blank=True)

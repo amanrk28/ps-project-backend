@@ -32,7 +32,7 @@ def signup(request):
         {'status': False, 'data': None, 'msg': 'Password not provided. Authentication Failed'}, status=400)
 
     user_data = {'email': email, 'phone_number': phone_number, 'username': username,
-                 'first_name': first_name, 'last_name': last_name, 'address': address,
+                 'first_name': first_name.title(), 'last_name': last_name.title(), 'address': address,
                  'is_store_owner': is_store_owner}
     user = User.objects.create(**user_data)
     user.set_password(request.data.get('password'))
@@ -60,8 +60,11 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
 @api_view(["POST"])
 @permission_classes([AllowAny,])
 @renderer_classes([ApiRenderer])
-def verify_user_and_return_token(request):
-    user = User.objects.get(email=request.data.get('email'))
+def login_user(request):
+    try:
+        user = User.objects.get(email=request.data.get('email'))
+    except User.DoesNotExist:
+        raise APIException("User Doesnot Exist")
     serializer = UserSerializer(user).data
     if not request.data.get('password'):
         return JsonResponse(
@@ -70,7 +73,18 @@ def verify_user_and_return_token(request):
         token = AuthToken.objects.get(user=user)
         res_data =  {'token': token.key, 'user': serializer}
         return Response(data=res_data, msg='User Verification Successful')
-    return Response(msg="User verification Failed. Check email or password")
+    return JsonResponse(
+        {'status': False, 'data': None, 'msg': 'User verification Failed. Check email or password'}, status=400)
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated,])
+@renderer_classes([ApiRenderer])
+def verify_token(request):
+    try:
+        res_data = {'user': UserSerializer(request.user).data, 'token': AuthToken.objects.get(user=request.user).key}
+        return Response(res_data, msg="Token verified Successfully")
+    except Exception:
+        raise APIException("Invalid Token")
 
 class AdminUserList(generics.ListAPIView):
     queryset = User.objects.filter(is_admin=True).order_by('first_name')

@@ -15,7 +15,7 @@ from project_backend.renderer import ApiRenderer
 
 
 class ProductList(generics.ListAPIView):
-    queryset = Product.objects.all().order_by('name')
+    queryset = Product.objects.all().order_by('category')
     serializer_class = ProductSerializer
     permission_classes = (AllowAny,)
     filter_backends = (filters.DjangoFilterBackend, searchFilter.SearchFilter)
@@ -23,7 +23,7 @@ class ProductList(generics.ListAPIView):
     search_fields = ['^name']
 
     def get_serializer(self, *args, **kwargs):
-        included_fields = ('id', 'name', 'price', 'image', 'stock', 'is_available', 'description', 'category')
+        included_fields = ('id', 'name', 'price', 'image', 'stock', 'is_available', 'description', 'category', 'added_by')
         return super(ProductList, self).get_serializer(*args, **kwargs, fields = included_fields)
 
 class ProductCreate(generics.CreateAPIView):
@@ -47,9 +47,25 @@ class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAuthenticated,
                           permission_required([UPDATE_PRODUCT, DELETE_PRODUCT, READ_PRODUCT]))
 
+    def get_object(self):
+        try:
+            return Product.objects.get(id=self.kwargs.get('pk'))
+        except Product.DoesNotExist:
+            raise APIException("Product Not Found")
+
+    def put(self, request, *args, **kwargs):
+        user: User = request.user
+        if not user.is_store_owner and not user.is_admin:
+            raise PermissionDenied()
+        product: Product = self.get_object()
+        if 'name' in request.data and request.data.get('name') != product.name:
+            raise APIException("Cannot change Product Name")
+        return self.partial_update(request, *args, **kwargs)
+
+
 # API view to fetch Product Categories List
 @api_view(["GET"])
-@permission_classes((IsAuthenticated,))
+@permission_classes((AllowAny,))
 @renderer_classes([ApiRenderer])
 def get_product_categories(request):
     data = {'categories': [category[1] for category in ProductCategory.choices]}
@@ -140,12 +156,18 @@ def checkout_page_details(request):
         raise APIException("Please refresh your page once")
 
     try:
-        _ = CartItem.objects.filter(cart=cart)
+        cart_items_qs = CartItem.objects.filter(cart=cart)
+        total_amount = 0
+        for item in list(cart_items_qs):
+            cart_item = CartItemSerializer(item).data
+            total_amount += cart_item['amount']
     except CartItem.DoesNotExist:
         raise APIException("Cart is empty. Add items to cart to proceed")
 
     serializer = CartSerializer(cart)
-    return Response(serializer.data, msg="Checkout page details")
+    data = serializer.data
+    data.update({'total_amount': total_amount})
+    return Response(data, msg="Checkout page details")
 
 
 

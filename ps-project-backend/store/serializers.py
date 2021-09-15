@@ -15,7 +15,11 @@ class CartSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         exclude = ('deleted', 'created_on', 'updated_on')
 
     def get_cart_items(self, instance):
-        return list(CartItem.objects.filter(cart=instance).values_list('product_id', flat=True))
+        cart_items_qs =  CartItem.objects.filter(cart=instance).values_list('product_id', 'quantity')
+        cart_items = []
+        for item in list(cart_items_qs):
+            cart_items.append({'id': item[0], 'quantity': item[1]})
+        return cart_items
 
 
 class CartItemSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
