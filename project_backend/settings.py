@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-1g^rgcn!m=$)8u0-o$u%k90f5xg$i0og0p8(6(9i$i4*!#fgdf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['ps-project-backend.herokuapp.com']
 
 AUTH_USER_MODEL = 'authentication.User'
 
@@ -92,7 +92,7 @@ WSGI_APPLICATION = 'project_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-print("DATABASE_USERNAME", os.getenv('DATABASE_USERNAME'))
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
