@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-1g^rgcn!m=$)8u0-o$u%k90f5xg$i0og0p8(6(9i$i4*!#fgdf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['ps-project-backend.herokuapp.com']
+ALLOWED_HOSTS = ['ps-project-backend.herokuapp.com', 'https://retailr.netlify.app/', 'localhost']
 
 AUTH_USER_MODEL = 'authentication.User'
 
@@ -57,6 +57,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://blissful-jackson-0bae7c.netlify.app"
 ]
 
 MIDDLEWARE = [
@@ -97,14 +98,16 @@ WSGI_APPLICATION = 'project_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mymsme',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db',
+        'NAME': os.getenv('DATABASE_NAME'),
+        'USER': os.getenv('DATABASE_USER'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+        'HOST': os.getenv('DATABASE_HOST'),
         'PORT': 5432,
     }
 }
-DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
+
+if os.getenv('ENVIRONMENT', 'development') == 'production':
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
 
 
 # Password validation
