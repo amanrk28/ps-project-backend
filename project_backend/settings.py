@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -91,7 +92,7 @@ WSGI_APPLICATION = 'project_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
+print("DATABASE_USERNAME", os.getenv('DATABASE_USERNAME'))
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
