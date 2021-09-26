@@ -12,6 +12,7 @@ django-restql = "*"
 django-filter = "*"
 sqlparse = "*"
 gunicorn = "*"
+dj-database-url = "*"
 
 [dev-packages]
 
