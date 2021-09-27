@@ -6,7 +6,7 @@ services:
     volumes:
       - pgsql:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=mymsme
+      - POSTGRES_DB=projectdb
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:

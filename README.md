@@ -1,4 +1,4 @@
-# Provision Store Project ( MYMSME )
+# Provision Store Project ( Retailr )
 
 Provision store Project is made to help local shopkeepers expand their customer base to more than just a locality.
 

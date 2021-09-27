@@ -14,8 +14,8 @@ from project_backend.utils import compute_hash, Response, permission_required
 from project_backend.renderer import ApiRenderer
 
 
-class ProductList(generics.ListAPIView):
-    queryset = Product.objects.all().order_by('category')
+class ProductList(generics.ListCreateAPIView):
+    queryset = Product.objects.all().order_by('-created_on')
     serializer_class = ProductSerializer
     permission_classes = (AllowAny,)
     filter_backends = (filters.DjangoFilterBackend, searchFilter.SearchFilter)
@@ -26,13 +26,10 @@ class ProductList(generics.ListAPIView):
         included_fields = ('id', 'name', 'price', 'image', 'stock', 'is_available', 'description', 'category', 'added_by')
         return super(ProductList, self).get_serializer(*args, **kwargs, fields = included_fields)
 
-class ProductCreate(generics.CreateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-    permission_classes = (IsAuthenticated,
-                          permission_required([ADD_PRODUCT]))
-
     def create(self,request, *args, **kwargs):
+        user: User = request.user
+        if not user.has_perm(ADD_PRODUCT) or not user.is_store_owner or not user.is_admin:
+            raise PermissionDenied()
         data = request.data
         serializer = self.get_serializer(data=data)
         serializer.initial_data['added_by'] = request.user.id
@@ -68,7 +65,7 @@ class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
 @permission_classes((AllowAny,))
 @renderer_classes([ApiRenderer])
 def get_product_categories(request):
-    data = {'categories': [category[1] for category in ProductCategory.choices]}
+    data = {'categories': [{ 'id': category[0], 'name':category[1]} for category in ProductCategory.choices]}
     return Response(data)
 
 

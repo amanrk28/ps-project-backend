@@ -1,15 +1,15 @@
 server:
-	python manage.py runserver
+	docker-compose up
 
 shell:
-	python manage.py shell
+	docker-compose run web python manage.py shell
 
 migration:
-	python manage.py makemigrations
+	docker-compose run web python manage.py makemigrations
 
 migrate:
-	python manage.py migrate
+	docker-compose run web python manage.py migrate
 
 su:
-	python manage.py createsuperuser
+	docker-compose run web python manage.py createsuperuser
 
