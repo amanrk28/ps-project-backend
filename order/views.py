@@ -13,11 +13,11 @@ from order.config import ORDER_DATE_FIELDS
 from order.serializers import OrderItemSerializer, OrderSerializer
 
 class OrderList(generics.ListCreateAPIView):
-    queryset = Order.objects.all()
+    queryset = Order.with_closed_objects.all().order_by('-order_date')
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,
                           permission_required([ADD_ORDER, READ_ORDER]))
-    filter_backends = (filters.DjangoFilterBackend)
+    filter_backends = [filters.DjangoFilterBackend,]
     filterset_fields = ('status', 'placed_by')
 
     def create(self, request, *args, **kwargs):
@@ -66,11 +66,10 @@ class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
     def get(self, request, *args, **kwargs):
         user: User = request.user
         order = self.get_object()
-        if user.has_perm(READ_ORDER):
-            serializer = self.get_serializer(order)
-            return Response(serializer.data)
-        else:
+        if not user.has_perm(READ_ORDER):
             raise PermissionDenied()
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
 
     def update_data(self, request, *args, **kwargs):
         data = request.data

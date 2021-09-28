@@ -190,13 +190,14 @@ def order_from_cart(request):
 
     dispatch_eta = datetime.datetime.now() + datetime.timedelta(days=2)
     delivery_eta = dispatch_eta + datetime.timedelta(days=2)
-    order_data = {'placed_by': user.id, 'delivery_address': user.address,
+    order_data = {'placed_by': user, 'delivery_address': user.address,
                   'expected_dispatch_date': dispatch_eta, 'expected_delivery_date': delivery_eta}
 
     order = Order.objects.create(**order_data)
 
     for item in cart_items:
-        OrderItem.objects.create({'product': item.product.id, 'quantity': item.quantity, 'order': order.id})
+        order_item = {'product_id': item.product.id, 'quantity': item.quantity, 'order_id': order.id}
+        OrderItem.objects.create(**order_item)
 
     cart.status = CartStatus.ORDERED
     cart.save()
