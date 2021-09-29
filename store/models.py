@@ -4,14 +4,14 @@ from project_backend.settings import AUTH_USER_MODEL
 
 
 class ProductCategory(models.TextChoices):
-    FRUITS_AND_VEGETABLES = 'Fruits & Vegetables'
-    FOODGRAINS_OIL_MASALA = 'Foodgrains, Oil & Masala'
-    DAIRY = 'Dairy'
-    BEVERAGES = 'Beverages'
-    CLEANING_AND_HOUSEHOLD = 'Cleaning & Household'
-    BEAUTY_AND_HYGIENE = 'Beauty & Hygiene'
-    SNACKS = 'Snacks'
-    NEW = 'New'
+    FRUITS_AND_VEGETABLES = 'fruits_and_vegetables'
+    FOODGRAINS_OIL_MASALA = 'foodgrains_oil_and_masala'
+    DAIRY = 'dairy'
+    BEVERAGES = 'beverages'
+    CLEANING_AND_HOUSEHOLD = 'cleaning_and_household'
+    BEAUTY_AND_HYGIENE = 'beauty_and_hygiene'
+    SNACKS = 'snacks'
+    NEW = 'new'
 
 
 class Product(BaseModel):
