@@ -56,6 +56,16 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     renderer_classes = [ApiRenderer]
     permission_classes = [IsAuthenticated,]
 
+    def put(self, request, *args, **kwargs):
+        user: User = request.user
+        if user.id == self.kwargs.get('pk'):
+            email = request.data.get('email', '')
+            if email and email != user.email:
+                raise APIException('Cannot change Email')
+            return self.partial_update(request, *args, **kwargs)
+        else:
+            raise APIException('You don\'t have necessary permissions')
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny,])
