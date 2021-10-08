@@ -35,7 +35,7 @@ class CartItemSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         exclude = ('deleted', 'created_on', 'updated_on', 'id')
 
     def get_product(self, instance):
-        excluded_fields = ('deleted', 'created_on', 'updated_on')
+        excluded_fields = ('deleted', 'created_on', 'updated_on', 'stock', 'added_by')
         return ProductSerializer(instance.product, context=self.context, exclude=excluded_fields).data
 
     def get_cart_count(self, instance):

@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import Group
 from rest_framework import generics, filters as searchFilter
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import APIException
@@ -10,6 +11,13 @@ from .models import User, AuthToken
 from .serializers import UserSerializer
 from project_backend.utils import Response
 from project_backend.renderer import ApiRenderer
+
+def assign_group_to_user(user: User, group_name):
+    try:
+        group = Group.objects.get(name=group_name)
+    except Group.DoesNotExist:
+        group = Group.objects.create(name=group_name)
+    user.groups.add(group)
 
 @csrf_exempt
 @api_view(["POST"])
@@ -37,6 +45,11 @@ def signup(request):
     user = User.objects.create(**user_data)
     user.set_password(request.data.get('password'))
     user.save()
+    if is_store_owner:
+        group_name = 'admin'
+    else:
+        group_name = 'customer'
+    assign_group_to_user(user, group_name)
     token = AuthToken.objects.create(user=user)
     res_data = {'token': token.key, 'user': UserSerializer(user).data}
     return Response(res_data, msg="Signup Successful")

@@ -1,12 +1,20 @@
-# Provision Store Project ( Retailr )
+# ![alt text](https://res.cloudinary.com/retailr/image/upload/v1632934376/products/logoMain_wdwznx.png)
 
-Provision store Project is made to help local shopkeepers expand their customer base to more than just a locality.
+Retailr is made to help local shopkeepers expand their customer base to more than just a locality.
 
 ## Basic Scenario
 
 Any local store owner can upload their products and its details on this platform and people can come here to purchase these products like an e-commerce app. After customer makes a puchase, we take care of payments, store pickup and doorstep delivery with minimal service charges based only on the profit gained by said store owner.
 
-## Development Setup
+### Hosted on [Netlify](https://retailr.netlify.app/)
+
+## Tech Stack
+
+- ReactJS
+- Django (Rest Framework)
+- PostgreSQL
+
+## Repo Setup
 
 1.  Set up SSH key in your system and copy it your github account.
 2.  Clone the code to your system by running `git clone git@github.com:Provision-Store-Project/ps-project-backend.git` in your terminal at desired location.
@@ -17,7 +25,4 @@ Any local store owner can upload their products and its details on this platform
 
 ## Contributors
 
-- Abhishek Kumar Yadav
-- Aman Khemka
-- Amose A
-- Anirudh B S
+<img src="https://contrib.rocks/image?repo=amanrk28/ps-project-frontend" />

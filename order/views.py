@@ -51,14 +51,14 @@ class OrderList(generics.ListCreateAPIView):
         return Response(serializer.data, msg="Order created Successfully")
 
 class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Order.objects.all()
+    queryset = Order.with_closed_objects.all()
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,
                           permission_required([ADD_ORDER, READ_ORDER]))
 
     def get_object(self):
         try:
-            order = Order.objects.get(pk=self.kwargs.get('pk'))
+            order = Order.with_closed_objects.get(pk=self.kwargs.get('pk'))
             return order
         except Order.DoesNotExist:
             raise APIException("Unable to get Order details")

@@ -54,9 +54,6 @@ class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
         user: User = request.user
         if not user.is_store_owner and not user.is_admin:
             raise PermissionDenied()
-        product: Product = self.get_object()
-        if 'name' in request.data and request.data.get('name') != product.name:
-            raise APIException("Cannot change Product Name")
         return self.partial_update(request, *args, **kwargs)
 
 
@@ -72,13 +69,13 @@ def get_product_categories(request):
 class CartItemList(generics.ListCreateAPIView):
     queryset = CartItem.objects.all()
     serializer_class = CartItemSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, permission_required([ADD_CARTITEM, READ_CARTITEM, ADD_CART]))
 
     def get_queryset(self):
         user: User = None if self.request.user.is_anonymous else self.request.user
         try:
             cart = Cart.objects.get(user=user, status=CartStatus.NEW)
-            return CartItem.objects.filter(cart=cart)
+            return CartItem.objects.filter(cart=cart, quantity__gt=0)
         except Cart.DoesNotExist:
             return CartItem.objects.none()
 
@@ -89,14 +86,20 @@ class CartItemList(generics.ListCreateAPIView):
         if not product_id or not Product.objects.filter(id=product_id).exists():
             raise APIException("Please enter valid Product")
 
+        if user.is_admin or user.is_store_owner or user.is_superuser:
+            raise APIException("Admin / Store Owner cannot add products to cart")
+
         try:
             cart = Cart.objects.get(user=user, status=CartStatus.NEW)
         except Cart.DoesNotExist:
             hash_id = compute_hash()
             cart = Cart.objects.create(user=user, hash=hash_id)
 
-        if CartItem.objects.filter(cart=cart, product=product_id).exists():
-            raise APIException("Product already Added to Cart")
+        if CartItem.objects.filter(product_id=product_id).exists():
+            cart_item = CartItem.objects.get(product_id=product_id)
+            cart_item.quantity = 1
+            cart_item.save()
+            return Response(CartItemSerializer(cart_item).data)
 
         serializer = self.get_serializer(data=request.data)
         serializer.initial_data['cart_id'] = cart.id
@@ -107,7 +110,7 @@ class CartItemList(generics.ListCreateAPIView):
 class CartItemDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = CartItem.objects.all()
     serializer_class = CartItemSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, permission_required([UPDATE_CARTITEM, DELETE_CARTITEM]))
 
     def get_cart(self):
         user: User = None if self.request.user.is_anonymous else self.request.user
@@ -126,46 +129,17 @@ class CartItemDetail(generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, *args, **kwargs):
         data = request.data
         cart_item = self.get_object()
+        product_id = self.kwargs.get('pk')
         # Add cart id and product id when updating item in cart
         data['cart_id'] = cart_item.cart.id
-        data['product_id'] = self.kwargs.get('pk')
+        data['product_id'] = product_id
         return self.partial_update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
         super(CartItemDetail, self).delete(request, *args, **kwargs)
         cart = self.get_cart()
-        res = {'cart_count': CartItem.objects.filter(cart=cart).count()}
+        res = {'cart_count': CartItem.objects.filter(cart=cart, quantity__gt=0).count()}
         return Response(res, msg="Successfully deleted Item from Cart")
-
-@api_view(["POST"])
-@permission_classes((IsAuthenticated,))
-@renderer_classes([ApiRenderer])
-def checkout_page_details(request):
-    user: User = request.user
-    cart_hash = request.data.get('cart_hash')
-
-    if not cart_hash or not Cart.objects.filter(hash=cart_hash).exists():
-        raise APIException("Cart Doesnot Exist")
-
-    try:
-        cart = Cart.objects.get(user=user, hash=cart_hash, status=CartStatus.NEW)
-    except Cart.DoesNotExist:
-        raise APIException("Please refresh your page once")
-
-    try:
-        cart_items_qs = CartItem.objects.filter(cart=cart)
-        total_amount = 0
-        for item in list(cart_items_qs):
-            cart_item = CartItemSerializer(item).data
-            total_amount += cart_item['amount']
-    except CartItem.DoesNotExist:
-        raise APIException("Cart is empty. Add items to cart to proceed")
-
-    serializer = CartSerializer(cart)
-    data = serializer.data
-    data.update({'total_amount': total_amount})
-    return Response(data, msg="Checkout page details")
-
 
 
 @api_view(["POST"])
@@ -184,7 +158,7 @@ def order_from_cart(request):
         raise APIException("Please refresh your page once")
 
     try:
-        cart_items = CartItem.objects.filter(cart=cart)
+        cart_items = CartItem.objects.filter(cart=cart, quantity__gt=0)
     except CartItem.DoesNotExist:
         raise APIException("Cart is empty. Add items to cart to proceed")
 
@@ -197,6 +171,9 @@ def order_from_cart(request):
 
     for item in cart_items:
         order_item = {'product_id': item.product.id, 'quantity': item.quantity, 'order_id': order.id}
+        product = Product.objects.get(id=item.product.id)
+        product.stock -= item.quantity
+        product.save()
         OrderItem.objects.create(**order_item)
 
     cart.status = CartStatus.ORDERED
