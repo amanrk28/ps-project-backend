@@ -1,5 +1,8 @@
 server:
 	docker-compose up
+	
+db:
+	docker-compose up db
 
 shell:
 	docker-compose run web python manage.py shell
