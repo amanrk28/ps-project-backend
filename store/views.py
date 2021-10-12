@@ -20,7 +20,7 @@ class ProductList(generics.ListCreateAPIView):
     permission_classes = (AllowAny,)
     filter_backends = (filters.DjangoFilterBackend, searchFilter.SearchFilter)
     filterset_fields = ['category',]
-    search_fields = ['name',]
+    search_fields = ['name', 'description']
 
     def get_serializer(self, *args, **kwargs):
         included_fields = ('id', 'name', 'price', 'image', 'stock', 'is_available', 'description', 'category', 'added_by')
