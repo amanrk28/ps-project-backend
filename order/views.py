@@ -1,10 +1,9 @@
 from django.core.exceptions import FieldDoesNotExist
-from django.http import JsonResponse
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import APIException, PermissionDenied
-from rest_framework.decorators import api_view, permission_classes, renderer_classes
-import django_filters.rest_framework as filters
+# from rest_framework.decorators import api_view, permission_classes, renderer_classes
+from django_filters.rest_framework import DjangoFilterBackend
 from authentication.models import User
 from authentication.config import *
 from project_backend.utils import Response, get_datetime_from_timestamp, permission_required
@@ -17,7 +16,7 @@ class OrderList(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,
                           permission_required([ADD_ORDER, READ_ORDER]))
-    filter_backends = [filters.DjangoFilterBackend,]
+    filter_backends = [DjangoFilterBackend,]
     filterset_fields = ('status', 'placed_by')
 
     def list(self, request, *args, **kwargs):
@@ -25,6 +24,9 @@ class OrderList(generics.ListCreateAPIView):
         queryset = self.get_queryset()
         if not user.is_admin and not user.is_store_owner and not user.is_superuser:
             queryset = Order.with_closed_objects.filter(placed_by=user).order_by('-id')
+        status = request.query_params.get('status', None)
+        if status is not None:
+            queryset = queryset.filter(status=status)
         return Response(OrderSerializer(queryset, many=True).data)
 
     def create(self, request, *args, **kwargs):
