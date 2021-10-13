@@ -10,6 +10,7 @@ from authentication.config import *
 from store.models import CartStatus, Product, Cart, CartItem, ProductCategory
 from store.serializers import CartSerializer, ProductSerializer, CartItemSerializer
 from order.models import Order, OrderItem
+from order.serializers import OrderSerializer
 from project_backend.utils import compute_hash, Response, permission_required
 from project_backend.renderer import ApiRenderer
 
@@ -149,6 +150,11 @@ def order_from_cart(request):
     user: User = request.user
     cart_hash = request.data.get('cart_hash')
 
+    for field in ['first_name', 'last_name', 'phone_number', 'address']:
+        if field in request.data and request.data.get(field):
+            user[field] = request.data.pop(field)
+    user.save()
+
     if not cart_hash or not Cart.objects.filter(hash=cart_hash).exists():
         raise APIException("Cart Doesnot Exist")
 
@@ -179,4 +185,5 @@ def order_from_cart(request):
     cart.status = CartStatus.ORDERED
     cart.save()
     CartItem.objects.filter(cart=cart.id).delete()
-    return Response({'order_id': order.id}, msg="Order Created")
+
+    return Response(OrderSerializer(order).data, msg="Order Created")

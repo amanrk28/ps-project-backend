@@ -10,15 +10,22 @@ from authentication.config import *
 from project_backend.utils import Response, get_datetime_from_timestamp, permission_required
 from order.models import Order, OrderItem
 from order.config import ORDER_DATE_FIELDS
-from order.serializers import OrderItemSerializer, OrderSerializer
+from order.serializers import OrderSerializer
 
 class OrderList(generics.ListCreateAPIView):
-    queryset = Order.with_closed_objects.all().order_by('-order_date')
+    queryset = Order.with_closed_objects.all().order_by('-id')
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,
                           permission_required([ADD_ORDER, READ_ORDER]))
     filter_backends = [filters.DjangoFilterBackend,]
     filterset_fields = ('status', 'placed_by')
+
+    def list(self, request, *args, **kwargs):
+        user: User = request.user
+        queryset = self.get_queryset()
+        if not user.is_admin and not user.is_store_owner and not user.is_superuser:
+            queryset = Order.with_closed_objects.filter(placed_by=user).order_by('-id')
+        return Response(OrderSerializer(queryset, many=True).data)
 
     def create(self, request, *args, **kwargs):
         data = request.data
