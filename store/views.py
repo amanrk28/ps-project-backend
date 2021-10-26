@@ -8,7 +8,7 @@ import django_filters.rest_framework as filters
 from authentication.models import User
 from authentication.config import *
 from store.models import CartStatus, Product, Cart, CartItem, ProductCategory
-from store.serializers import CartSerializer, ProductSerializer, CartItemSerializer
+from store.serializers import ProductSerializer, CartItemSerializer
 from order.models import Order, OrderItem
 from order.serializers import OrderSerializer
 from project_backend.utils import compute_hash, Response, permission_required
@@ -16,7 +16,7 @@ from project_backend.renderer import ApiRenderer
 
 
 class ProductList(generics.ListCreateAPIView):
-    queryset = Product.objects.all().order_by('-created_on')
+    queryset = Product.objects.filter(is_available=True, stock__gt=5).order_by('-created_on')
     serializer_class = ProductSerializer
     permission_classes = (AllowAny,)
     filter_backends = (filters.DjangoFilterBackend, searchFilter.SearchFilter)
@@ -147,13 +147,15 @@ class CartItemDetail(generics.RetrieveUpdateDestroyAPIView):
 @permission_classes((IsAuthenticated, permission_required([ADD_ORDER, DELETE_CARTITEM, READ_CART, READ_CARTITEM, UPDATE_CART])))
 @renderer_classes([ApiRenderer])
 def order_from_cart(request):
-    user: User = request.user
+    user = request.user
     cart_hash = request.data.get('cart_hash')
 
-    for field in ['first_name', 'last_name', 'phone_number', 'address']:
-        if field in request.data and request.data.get(field):
-            user[field] = request.data.pop(field)
-    user.save()
+    if 'address' in request.data and request.data.get('address'):
+        user.first_name = request.data.pop('first_name')
+        user.last_name = request.data.pop('last_name')
+        user.phone_number = request.data.pop('phone_number')
+        user.address = request.data.pop('address')
+        user.save()
 
     if not cart_hash or not Cart.objects.filter(hash=cart_hash).exists():
         raise APIException("Cart Doesnot Exist")
@@ -176,7 +178,7 @@ def order_from_cart(request):
     order = Order.objects.create(**order_data)
 
     for item in cart_items:
-        order_item = {'product_id': item.product.id, 'quantity': item.quantity, 'order_id': order.id}
+        order_item = {'product_id': item.product.id, 'quantity': item.quantity, 'order_id': order.id, 'amount': item.product.price * item.quantity}
         product = Product.objects.get(id=item.product.id)
         product.stock -= item.quantity
         product.save()

@@ -1,4 +1,6 @@
+import datetime
 from django.core.exceptions import FieldDoesNotExist
+from django.db.models import fields
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import APIException, PermissionDenied
@@ -10,6 +12,7 @@ from project_backend.utils import Response, get_datetime_from_timestamp, permiss
 from order.models import Order, OrderItem
 from order.config import ORDER_DATE_FIELDS
 from order.serializers import OrderSerializer
+from store.models import Product
 
 class OrderList(generics.ListCreateAPIView):
     queryset = Order.with_closed_objects.all().order_by('-id')
@@ -17,7 +20,7 @@ class OrderList(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticated,
                           permission_required([ADD_ORDER, READ_ORDER]))
     filter_backends = [DjangoFilterBackend,]
-    filterset_fields = ('status', 'placed_by')
+    filterset_fields = ('status')
 
     def list(self, request, *args, **kwargs):
         user: User = request.user
@@ -27,7 +30,8 @@ class OrderList(generics.ListCreateAPIView):
         status = request.query_params.get('status', None)
         if status is not None:
             queryset = queryset.filter(status=status)
-        return Response(OrderSerializer(queryset, many=True).data)
+        included_fields = ['id', 'placed_by', 'order_date', 'expected_delivery_date', 'status']
+        return Response(OrderSerializer(queryset, many=True, fields=included_fields).data)
 
     def create(self, request, *args, **kwargs):
         data = request.data
@@ -55,12 +59,13 @@ class OrderList(generics.ListCreateAPIView):
 
         order = serializer.data['id']
         for item in products:
-            OrderItem.objects.create({'product': item.product, 'quantity': item.quantity, 'order': order})
+            product_price = Product.objects.get(id=item.product).price
+            OrderItem.objects.create({'product': item.product, 'quantity': item.quantity, 'order': order, 'amount': product_price * item.quantity})
 
         return Response(serializer.data, msg="Order created Successfully")
 
 class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Order.with_closed_objects.all()
+    queryset = Order.with_closed_objects.all().order_by('-id')
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,
                           permission_required([ADD_ORDER, READ_ORDER]))
@@ -89,15 +94,21 @@ class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
             if field in data and data[field]:
                 data[field] = get_datetime_from_timestamp(data[field])
 
+        if 'status' in data and data.get('status'):
+            status = data.get('status')
+            if status == 'dispatched':
+                data['dispatch_date'] = datetime.datetime.now()
+            elif status == 'closed':
+                data['delivery_date'] = datetime.datetime.now()
+
         for key, value in data.items():
             try:
                 _ = Order._meta.get_field(key)
             except FieldDoesNotExist:
                 data['more_details'][key] = value
 
-        res_data = self.partial_update(request, *args, **kwargs)
-        res_instance = Order.all_objects.get(id=res_data.data['id'])
-        return Response(self.get_serializer(res_instance).data)
+        self.partial_update(request, *args, **kwargs)
+        return self.get(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
         user: User = request.user

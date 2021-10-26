@@ -1,5 +1,4 @@
 from django.db import models
-from datetime import date
 from project_backend.models import BaseModel, BaseManager
 from project_backend.settings import AUTH_USER_MODEL
 from project_backend.utils import compute_hash
@@ -58,13 +57,10 @@ class OrderItem(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     order = models.ForeignKey(Order, on_delete=models.PROTECT)
     quantity = models.IntegerField(default=1)
+    amount = models.FloatField(default=0)
 
     class Meta:
         db_table = 'order_item'
-
-    @property
-    def amount(self):
-        return self.product.price * self.quantity
 
 
 # # class PaymentOptions(models.TextChoices):

@@ -14,12 +14,12 @@ class OrderSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
     def get_products(self, order):
-        product_queryset = OrderItem.objects.filter(order=order).values_list('product', 'quantity', 'product__price')
+        product_queryset = OrderItem.objects.filter(order=order).values_list('product', 'quantity', 'amount')
         products = []
+        included_fields = ('category', 'id', 'image', 'name', 'price', 'is_available')
         for item in list(product_queryset):
-            included_fields = ('category', 'id', 'image', 'name', 'price', 'is_available')
             product_obj = ProductSerializer(Product.objects.get(id=item[0]), fields=included_fields).data
-            products.append({'product': product_obj, 'quantity': item[1], 'amount': item[2] * item[1]})
+            products.append({'product': product_obj, 'quantity': item[1], 'amount': item[2]})
         return products
 
     def get_placed_by(self, order):
@@ -29,11 +29,6 @@ class OrderSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
 
 class OrderItemSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
-    amount = serializers.SerializerMethodField()
-
     class Meta:
         model = OrderItem
         exclude = ('deleted', 'created_on', 'updated_on')
-
-    def get_amount(self, instance):
-        return instance.amount
