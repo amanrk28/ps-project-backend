@@ -12,11 +12,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-1g^rgcn!m=$)8u0-o$u%k90f5xg$i0og0p8(6(9i$i4*!#fgdf'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG')
+DEBUG = eval((os.getenv('DEBUG')).title())
 
-ALLOWED_HOSTS = ['ps-project-backend.herokuapp.com', 'https://retailr.netlify.app/', 'localhost']
+ALLOWED_HOSTS = ['ps-project-backend.herokuapp.com', 'https://retailr.netlify.app/', 'localhost' ,'admin.localhost']
 
 AUTH_USER_MODEL = 'authentication.User'
+
+ADMINS = [('Aman', 'amankhemka.ak28@gmail.com'),]
 
 # Application definition
 
