@@ -23,6 +23,7 @@ class OrderStatus(models.TextChoices):
     NEW = 'new'
     DISPATCHED = 'dispatched'
     CLOSED = 'closed'
+    CANCELLED = 'cancelled'
 
 class Order(BaseModel):
     placed_by = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.PROTECT)
@@ -40,6 +41,8 @@ class Order(BaseModel):
     objects = OrderBaseManager()
     with_closed_objects = OrderBaseManager(closed=True)
     all_objects = OrderBaseManager(deleted=True, closed=True)
+    cancellation_time_limit = models.DateTimeField(null=True, blank=True)
+    cancelled = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'order'

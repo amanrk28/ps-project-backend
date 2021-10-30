@@ -12,7 +12,7 @@ for it in [USER_GROUP_SUPERUSER, USER_GROUP_ADMIN, USER_GROUP_CUSTOMER]:
         Group.objects.create(name=it)
 
 customer_permissions = ['add_cart', 'view_cart', 'add_cartitem', 'view_cartitem', 'change_cartitem', 'delete_cartitem',
-                        'view_product', 'add_order', 'view_order', 'add_orderitem', 'view_orderitem']
+                        'view_product', 'add_order', 'view_order', 'add_orderitem', 'view_orderitem', 'change_order']
 
 admin_permissions = ['view_order', 'change_order', 'view_cart', 'view_cartitem', 'add_product', 'view_product',
                      'change_product', 'delete_product', 'view_user', 'view_orderitem']

@@ -32,6 +32,8 @@ class ProductList(generics.ListCreateAPIView):
         if not user.has_perm(ADD_PRODUCT) or not user.is_store_owner or not user.is_admin:
             raise PermissionDenied()
         data = request.data
+        if 'stock' in data and data['stock']:
+            data['is_available'] = True
         serializer = self.get_serializer(data=data)
         serializer.initial_data['added_by'] = request.user.id
         serializer.is_valid(raise_exception=True)
@@ -172,8 +174,10 @@ def order_from_cart(request):
 
     dispatch_eta = datetime.datetime.now() + datetime.timedelta(days=2)
     delivery_eta = dispatch_eta + datetime.timedelta(days=2)
+    cancellation_time_limit = datetime.datetime.now() + datetime.timedelta(hours=1)
     order_data = {'placed_by': user, 'delivery_address': user.address,
-                  'expected_dispatch_date': dispatch_eta, 'expected_delivery_date': delivery_eta}
+                  'expected_dispatch_date': dispatch_eta, 'expected_delivery_date': delivery_eta,
+                  'cancellation_time_limit': cancellation_time_limit}
 
     order = Order.objects.create(**order_data)
 

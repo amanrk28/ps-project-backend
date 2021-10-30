@@ -1,18 +1,19 @@
 import datetime
 from django.core.exceptions import FieldDoesNotExist
-from django.db.models import fields
+from django.utils import timezone
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import APIException, PermissionDenied
-# from rest_framework.decorators import api_view, permission_classes, renderer_classes
+from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from django_filters.rest_framework import DjangoFilterBackend
 from authentication.models import User
 from authentication.config import *
 from project_backend.utils import Response, get_datetime_from_timestamp, permission_required
-from order.models import Order, OrderItem
+from order.models import Order, OrderItem, OrderStatus
 from order.config import ORDER_DATE_FIELDS
 from order.serializers import OrderSerializer
 from store.models import Product
+from project_backend.renderer import ApiRenderer
 
 class OrderList(generics.ListCreateAPIView):
     queryset = Order.with_closed_objects.all().order_by('-id')
@@ -30,7 +31,7 @@ class OrderList(generics.ListCreateAPIView):
         status = request.query_params.get('status', None)
         if status is not None:
             queryset = queryset.filter(status=status)
-        included_fields = ['id', 'placed_by', 'order_date', 'expected_delivery_date', 'status']
+        included_fields = ['id', 'placed_by', 'order_date', 'expected_delivery_date', 'status', 'delivery_date']
         return Response(OrderSerializer(queryset, many=True, fields=included_fields).data)
 
     def create(self, request, *args, **kwargs):
@@ -54,6 +55,7 @@ class OrderList(generics.ListCreateAPIView):
 
         serializer = self.get_serializer(data=data)
         serializer.initial_data['placed_by'] = request.user.id
+        serializer.initial_data['cancellation_time_limit'] = datetime.datetime.now() + datetime.timedelta(hours=1)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -116,3 +118,20 @@ class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
             return self.update_data(request, *args, **kwargs)
         else:
             raise PermissionDenied()
+
+@api_view(["GET"])
+@permission_classes((IsAuthenticated, permission_required([UPDATE_ORDER])))
+@renderer_classes([ApiRenderer])
+def cancel_order(request, pk):
+    user: User = request.user
+    if not user.has_perm(UPDATE_ORDER):
+        raise PermissionDenied()
+    order = Order.all_objects.get(id=pk)
+    if timezone.now() > order.cancellation_time_limit:
+        raise APIException("Order cannot be cancelled anymore!")
+    else:
+        order.cancelled = True
+        order.status = OrderStatus.CANCELLED
+        order.save()
+        return Response("Order cancelled Successfully")
+
