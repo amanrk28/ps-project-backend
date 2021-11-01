@@ -8,4 +8,3 @@ def update_product_availability(sender, instance: Product, **kwargs):
         instance.is_available = True
     else:
         instance.is_available = False
-    instance.save()
