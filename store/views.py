@@ -16,7 +16,7 @@ from project_backend.renderer import ApiRenderer
 
 
 class ProductList(generics.ListCreateAPIView):
-    queryset = Product.objects.filter(is_available=True, stock__gt=5).order_by('-created_on')
+    queryset = Product.objects.filter(is_available=True).order_by('-created_on')
     serializer_class = ProductSerializer
     permission_classes = (AllowAny,)
     filter_backends = (filters.DjangoFilterBackend, searchFilter.SearchFilter)

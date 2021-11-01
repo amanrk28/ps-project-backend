@@ -132,6 +132,9 @@ def cancel_order(request, pk):
     else:
         order.cancelled = True
         order.status = OrderStatus.CANCELLED
+        order.expected_delivery_date = None
+        order.expected_dispatch_date = None
+        order.cancellation_time_limit = None
         order.save()
         return Response("Order cancelled Successfully")
 
