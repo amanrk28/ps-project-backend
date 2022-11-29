@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-1g^rgcn!m=$)8u0-o$u%k90f5xg$i0og0p8(6(9i$i4*!#fgdf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = eval((os.getenv('DEBUG')).title())
 
-ALLOWED_HOSTS = ['ps-project-backend.herokuapp.com', 'https://retailr.netlify.app/', 'localhost' ,'admin.localhost']
+ALLOWED_HOSTS = ['ps-project-backend.herokuapp.com', 'https://retailr.vercel.app/', 'localhost' ,'admin.localhost']
 
 AUTH_USER_MODEL = 'authentication.User'
 
@@ -59,7 +59,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://blissful-jackson-0bae7c.netlify.app"
+    "https://retailr.vercel.app"
 ]
 
 MIDDLEWARE = [
