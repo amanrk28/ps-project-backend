@@ -1,8 +1,8 @@
 server:
 	docker-compose up
-	
+
 db:
-	docker-compose up db
+	docker-compose up postgresdb
 
 shell:
 	docker-compose run web python manage.py shell
