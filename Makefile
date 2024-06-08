@@ -1,18 +1,26 @@
 server:
-	docker-compose up
+	docker-compose up -d
 
 db:
 	docker-compose up postgresdb
 
 shell:
-	docker-compose run web python manage.py shell
+	docker-compose run app python manage.py shell
 
 migration:
-	docker-compose run web python manage.py makemigrations
+	docker-compose run app python manage.py makemigrations
 
 migrate:
-	docker-compose run web python manage.py migrate
+	docker-compose run app python manage.py migrate
 
 su:
-	docker-compose run web python manage.py createsuperuser
+	docker-compose run app python manage.py createsuperuser
 
+down:
+	docker-compose down
+
+start:
+	docker-compose start
+
+stop:
+	docker-compose stop

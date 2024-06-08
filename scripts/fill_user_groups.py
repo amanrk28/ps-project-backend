@@ -1,3 +1,13 @@
+import sys
+import os
+from pathlib import Path
+import django
+
+sys.path.append(Path(__file__).resolve().parent.parent.__str__())
+print (sys.path)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE','project_backend.settings')
+django.setup()
+
 from django.contrib.auth.models import Group, Permission
 from authentication.models import User
 
